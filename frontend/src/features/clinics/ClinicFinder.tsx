@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useLanguage, useTranslate } from '../../lib/i18n'
+import { useTranslate } from '../../lib/i18n'
 import {
   listClinicServiceOptions,
   searchClinics,
@@ -20,14 +20,6 @@ const defaultSearch: ClinicSearchOptions = {
   services: [],
   acceptingNewPatients: false,
   onlyWithAvailability: false,
-}
-
-function formatNextAvailable(value: string, timeZone: string, language: 'en' | 'fr') {
-  return new Intl.DateTimeFormat(language === 'fr' ? 'fr-CA' : 'en-CA', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone,
-  }).format(new Date(value))
 }
 
 function sortClinics(clinics: Clinic[], sortBy: SortOption) {
@@ -55,7 +47,6 @@ function sortClinics(clinics: Clinic[], sortBy: SortOption) {
 
 export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderProps) {
   const t = useTranslate()
-  const language = useLanguage()
   const [clinics, setClinics] = useState<Clinic[]>([])
   const [serviceOptions, setServiceOptions] = useState<string[]>([])
   const [location, setLocation] = useState(defaultSearch.location)
@@ -64,27 +55,9 @@ export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderP
   const [acceptingNewPatients, setAcceptingNewPatients] = useState(false)
   const [onlyWithAvailability, setOnlyWithAvailability] = useState(false)
   const [sortBy, setSortBy] = useState<SortOption>('nearest')
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-   const [sortBy, setSortBy] = useState('distance')
-
-  const sortedClinics = [...clinics].sort((a, b) => {
-    if (sortBy === 'name') {
-      return a.name.localeCompare(b.name)
-    }
-
-    if (sortBy === 'availability') {
-      if (!a.next_available_at && !b.next_available_at) return 0
-      if (!a.next_available_at) return 1
-      if (!b.next_available_at) return -1
-
-      return new Date(a.next_available_at).getTime()
-        - new Date(b.next_available_at).getTime()
-    }
-
-    return a.distance_km - b.distance_km
-  })
+   const sortedClinics = useMemo(() => sortClinics(clinics, sortBy), [clinics, sortBy])
 
   function resetFilters() {
     setLocation(defaultSearch.location)
@@ -92,7 +65,7 @@ export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderP
     setSelectedServices([])
     setAcceptingNewPatients(false)
     setOnlyWithAvailability(false)
-    setSortBy('distance')
+    setSortBy('nearest')
 
     void loadClinics(defaultSearch)
   }
@@ -260,26 +233,6 @@ export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderP
           {t('Reset filters')}
         </button>
       </form>
-      {!isLoading && !error && (
-        <div className="clinic-results-controls">
-          <p aria-live="polite">
-            <strong>{clinics.length} {t('clinics found')}</strong>
-          </p>
-
-          <label htmlFor="clinic-sort">
-            {t('Sort by')}
-            <select
-              id="clinic-sort"
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
-            >
-              <option value="distance">{t('Nearest first')}</option>
-              <option value="availability">{t('Earliest appointment')}</option>
-              <option value="name">{t('Clinic name (A-Z)')}</option>
-            </select>
-          </label>
-        </div>
-      )}
       {error && <p className="auth-error" role="alert">{t(error)}</p>}
       {isLoading ? (
         <p role="status">Finding nearby clinics…</p>
@@ -287,7 +240,6 @@ export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderP
         <div className="clinic-list" aria-live="polite">
           {sortedClinics.map((clinic) => {
             const isSelected = clinic.id === selectedClinicId
-            const locationLabel = [clinic.city, clinic.province].filter(Boolean).join(', ')
 
             return (
               <article className={`clinic-card${isSelected ? ' selected' : ''}`} key={clinic.id}>
@@ -300,6 +252,7 @@ export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderP
                       {t('Verified from')} {clinic.source_name} {t('on')} {clinic.source_checked_on}
                       {clinic.source_url && <> · <a href={clinic.source_url} target="_blank" rel="noreferrer">{t('View source')}</a></>}
                     </p>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -313,7 +266,6 @@ export function ClinicFinder({ selectedClinicId, onSelectClinic }: ClinicFinderP
               )
             })}
           </div>
-        </>
       ) : (
         <p>{t('No clinics match these search options. Try a larger distance or remove a filter.')}</p>
       )}
