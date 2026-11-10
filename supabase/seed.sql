@@ -67,7 +67,6 @@ on conflict do nothing;
 -- This synthetic staff identity has no password and cannot be used to sign in.
 -- It provides a provider and weekday schedule for local booking tests.
 insert into auth.users (
-    id,
     aud,
     role,
     email,
