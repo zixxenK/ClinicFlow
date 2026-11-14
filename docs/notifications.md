@@ -33,9 +33,9 @@ Until custom SMTP is configured and verified, a successful signup response is no
 
 ## Google sign-in
 
-The web login form offers Google OAuth. Configure Google under **Authentication → Sign In / Providers** in the hosted Supabase dashboard. The separate **OAuth Server** page makes ClinicFlow an identity provider for other apps and does not enable Google sign-in.
+The web login form offers Google OAuth. Configure Google under **Authentication → Sign In / Providers → Google** in the hosted Supabase dashboard. The separate **OAuth Server** page makes ClinicFlow an identity provider for other apps and does not enable Google sign-in. Leave OAuth Server disabled unless ClinicFlow should provide sign-in to third-party apps; its `/oauth/consent` path is not implemented by this app.
 
-1. Create a Google OAuth 2.0 web client and add `https://ixeghmxinrrknbwbbbdq.supabase.co/auth/v1/callback` as its authorized redirect URI.
+1. Create a Google OAuth 2.0 web client and add `https://ixeghmxjnrrknbwbbbdg.supabase.co/auth/v1/callback` as its authorized redirect URI.
 2. Enter the Google client ID and client secret directly in Supabase Auth's Google provider settings. Do not put the client secret in Vercel or frontend code.
 3. Add the exact Vercel preview origin above to Supabase's allowed redirect URLs. The app returns users to the origin where they started sign-in.
 4. If the Google consent screen is in Testing mode, add the tester's Google account to its test-user list. Test login and first-time account creation with a team controlled account.
