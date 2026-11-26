@@ -15,7 +15,7 @@
     "prototype": "npm run dev"
   },
   "devDependencies": {
-    "nodemailer": "^10.6.0",
+    "nodemailer": "^10.6.1",
     "supabase": "^3.2.0"
   }
 }
